@@ -1,6 +1,7 @@
 import sys
 import json
 import yaml
+import xml
 
 class JsonTask():
     def __init__(self, from_file, to_file = None):
@@ -67,6 +68,24 @@ class YamlTask():
         except Exception as e:
             print(e)
 
+class XmlTask():
+    def __init__(self, from_file, to_file = None):
+        self.file = from_file
+        self.file2 = to_file
+        self.dane = None
+
+    def xml_validation(self):
+        try:
+            with open(self.file) as xml_file:
+                self.dane = xml.etree.ElementTree.parse(xml_file)
+            print("Dane z pliku XML zostały poprawnie załadowane i zweryfikowane!")
+        except FileNotFoundError:
+            print("Nie znaleziono takiego pliku")
+        except xml.etree.ElementTree.ParseError:
+            print("Plik xml jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
 if __name__ == '__main__':
     if ".json" in sys.argv[1]:
         json_task = JsonTask(sys.argv[1])
@@ -82,3 +101,6 @@ if __name__ == '__main__':
             json_task = JsonTask(yaml_task.dane, sys.argv[2])
             json_task.json_convert()
             json_task.json_save()
+    if ".xml" in sys.argv[1]:
+        xml_task = XmlTask(sys.argv[1])
+        xml_task.xml_validation()
