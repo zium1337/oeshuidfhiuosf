@@ -1,7 +1,8 @@
 import sys
 import json
 import yaml
-import xml
+import xml.etree.ElementTree as ET
+import xmltodict
 
 class JsonTask():
     def __init__(self, from_file, to_file = None):
@@ -9,9 +10,21 @@ class JsonTask():
         self.file2 = to_file
         self.dane = None
     
-    def json_convert(self):
+    def yaml_to_json_convert(self):
         try:
             self.dane = json.dumps(self.file)
+            print("Dane zostały poprawnie skonwertowane")
+        except FileNotFoundError:
+            print("Nie znaleziono takiego pliku")
+        except json.decoder.JSONDecodeError:
+            print("Plik json jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
+    def xml_to_json_convert(self):
+        try:
+            with open(self.file) as xml_file:
+                self.dane = json.dumps(xmltodict.parse(xml_file.read()))
             print("Dane zostały poprawnie skonwertowane")
         except FileNotFoundError:
             print("Nie znaleziono takiego pliku")
@@ -47,6 +60,29 @@ class YamlTask():
         self.file2 = to_file
         self.dane = None
 
+    def xml_to_yaml_convert(self):
+        try:
+            with open(self.file) as xml_file:
+                self.dane = yaml.load(xml_file, Loader=yaml.FullLoader)
+            print("Dane zostały poprawnie skonwertowane")
+        except FileNotFoundError:
+            print("Nie znaleziono takiego pliku")
+        except yaml.scanner.ScannerError:
+            print("Plik yaml jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
+    def json_to_yaml_convert(self):
+        try:
+            self.dane = yaml.safe_dump(self.file)
+            print("Dane zostały poprawnie skonwertowane")
+        except FileNotFoundError:
+            print("Nie znaleziono takiego pliku")
+        except yaml.scanner.ScannerError:
+            print("Plik yaml jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
     def yaml_validation(self):
         try:
             with open(self.file) as yaml_file:
@@ -74,14 +110,34 @@ class XmlTask():
         self.file2 = to_file
         self.dane = None
 
+    def xml_convert(self):
+        try:
+            self.dane = xmltodict.unparse(self.file)
+            print("Dane zostały poprawnie skonwertowane")
+        except FileNotFoundError:
+            print("Nie znaleziono takiego pliku")
+        except yaml.scanner.ScannerError:
+            print("Plik yaml jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
     def xml_validation(self):
         try:
             with open(self.file) as xml_file:
-                self.dane = xml.etree.ElementTree.parse(xml_file)
+                self.dane = ET.parse(xml_file)
             print("Dane z pliku XML zostały poprawnie załadowane i zweryfikowane!")
         except FileNotFoundError:
             print("Nie znaleziono takiego pliku")
-        except xml.etree.ElementTree.ParseError:
+        except ET.ParseError:
+            print("Plik xml jest nieprawidłowy")
+        except Exception as e:
+            print(e)
+
+    def xml_save(self):
+        try:
+            with open(self.file2, 'w') as xml_file:
+                xml_file.write(self.dane)
+        except ET.ParseError:
             print("Plik xml jest nieprawidłowy")
         except Exception as e:
             print(e)
@@ -94,13 +150,31 @@ if __name__ == '__main__':
             yaml_task = YamlTask(sys.argv[1], sys.argv[2])
             yaml_task.yaml_validation()
             yaml_task.yaml_save()
+        if ".xml" in sys.argv[2]:
+            xml_task = XmlTask(json_task.dane, sys.argv[2])
+            xml_task.xml_convert()
+            xml_task.xml_save()
     if ".yaml" in sys.argv[1]:
         yaml_task = YamlTask(sys.argv[1])
         yaml_task.yaml_validation()
         if ".json" in sys.argv[2]:
             json_task = JsonTask(yaml_task.dane, sys.argv[2])
-            json_task.json_convert()
+            json_task.yaml_to_json_convert()
             json_task.json_save()
+        if ".xml" in sys.argv[2]:
+            xml_task = XmlTask(yaml_task.dane, sys.argv[2])
+            xml_task.xml_convert()
+            xml_task.xml_save()
     if ".xml" in sys.argv[1]:
         xml_task = XmlTask(sys.argv[1])
         xml_task.xml_validation()
+        if ".json" in sys.argv[2]:
+            json_task = JsonTask(sys.argv[1], sys.argv[2])
+            json_task.xml_to_json_convert()
+            json_task.json_save()
+        if ".yaml" in sys.argv[2]:
+            json_task = JsonTask(sys.argv[1], sys.argv[2])
+            json_task.xml_to_json_convert()
+            yaml_task = YamlTask(json_task.dane, sys.argv[2])
+            yaml_task.json_to_yaml_convert()
+            yaml_task.yaml_save()
