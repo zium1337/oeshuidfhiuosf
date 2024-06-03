@@ -1,7 +1,8 @@
 import subprocess
 
 dependencies = [
-
+    "PyYAML"
+    "xmltodict"
 ]
 
 def install_packages():
