@@ -1,7 +1,7 @@
 import subprocess
 
 dependencies = [
-    "PyYAML"
+    "PyYAML",
     "xmltodict"
 ]
 
